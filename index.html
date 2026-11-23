@@ -78,6 +78,21 @@ h1{font-size:32px;font-weight:900;letter-spacing:8px;color:var(--paper);line-hei
 .time{display:flex;justify-content:space-between;align-items:center;font-size:15px;margin-bottom:12px}
 .time b{color:var(--paper);font-weight:600}
 .link{background:none;border:none;color:var(--gold);font-size:13px;text-decoration:underline;min-height:36px}
+.ways{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:10px}
+.way{min-height:52px;border:1px solid #4a3e2e;background:none;color:var(--text);border-radius:10px;font-size:15px;line-height:1.25}
+.way small{display:block;font-size:11px;color:var(--mute);margin-top:2px}
+.way.on{border-color:var(--cinnabar);background:rgba(184,57,42,.16);color:var(--paper)}
+.way.on small{color:#d9b9a4}
+.wp{display:none;margin-bottom:12px}.wp.show{display:block}
+.wp .tip{font-size:13px;color:var(--mute);margin-bottom:8px;line-height:1.6}
+.nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.nums input{width:100%;font:22px "Noto Serif TC",serif;text-align:center;background:#100d0a;border:1px solid #4a3e2e;border-radius:10px;color:var(--paper);padding:10px 4px}
+.chars{font-size:15px;line-height:1.7}.chars b{font-size:24px;color:var(--paper)}
+.warn{color:#e08a7c}
+.reels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.reel{min-height:64px;border:1px solid var(--gold);border-radius:12px;background:#100d0a;color:var(--paper);font:900 30px "Noto Serif TC",serif}
+.reel.stop{border-color:var(--cinnabar);background:rgba(184,57,42,.18)}
+.reel small{display:block;font-size:11px;font-weight:400;color:var(--mute)}
 .manual{display:none;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
 .manual.show{display:grid}
 select{width:100%;font:16px "Noto Serif TC",serif;padding:9px 6px;border-radius:10px;border:1px solid #4a3e2e;background:#100d0a;color:var(--paper)}
@@ -178,9 +193,32 @@ footer{text-align:center;font-size:12px;color:var(--mute);padding:12px 8px calc(
       <button class="mode on" data-m="auto">讓它自己掐<small>看拇指走一遍</small></button>
       <button class="mode" data-m="hand">我自己掐<small>點一下走一格</small></button>
     </div>
-    <div class="time"><span>現在是 <b id="timeTxt">—</b></span><button class="link" id="editTime">改時間</button></div>
-    <div class="manual" id="manual">
-      <select id="selM" aria-label="農曆月"></select><select id="selD" aria-label="農曆日"></select><select id="selH" aria-label="時辰"></select>
+    <div class="lbl">起課方式</div>
+    <div class="ways" id="ways">
+      <button class="way on" data-w="time">時辰<small>月日時</small></button>
+      <button class="way" data-w="number">報數<small>自己報</small></button>
+      <button class="way" data-w="chars">字數<small>看問題</small></button>
+      <button class="way" data-w="spin">搖數<small>碰運氣</small></button>
+    </div>
+    <div class="wp show" id="wp-time">
+      <div class="tip">最傳統的馬前課，用現在的農曆月、日和時辰。同一個時辰裡算出來都一樣。</div>
+      <div class="time"><span>現在是 <b id="timeTxt">—</b></span><button class="link" id="editTime">改時間</button></div>
+      <div class="manual" id="manual">
+        <select id="selM" aria-label="農曆月"></select><select id="selD" aria-label="農曆日"></select><select id="selH" aria-label="時辰"></select>
+      </div>
+    </div>
+    <div class="wp" id="wp-number">
+      <div class="tip">不用想太多，腦中第一個冒出來的數字最準。填三個 1 到 99 的數字。</div>
+      <div class="nums"><input id="n1" type="number" inputmode="numeric" min="1" max="99" placeholder="一" aria-label="第一個數"><input id="n2" type="number" inputmode="numeric" min="1" max="99" placeholder="二" aria-label="第二個數"><input id="n3" type="number" inputmode="numeric" min="1" max="99" placeholder="三" aria-label="第三個數"></div>
+    </div>
+    <div class="wp" id="wp-chars">
+      <div class="tip">把你寫下的問題數一數有幾個字，當作第一個數，再接上今天的日子和時辰。換個問法，結果就可能不同。</div>
+      <div class="chars" id="charsTxt"></div>
+    </div>
+    <div class="wp" id="wp-spin">
+      <div class="tip">三個數字一直在跑，心裡想著那件事，一個一個點下去讓它停。</div>
+      <div class="reels"><button class="reel" id="r0">—<small>點我停</small></button><button class="reel" id="r1">—<small>點我停</small></button><button class="reel" id="r2">—<small>點我停</small></button></div>
+      <button class="link" id="respin">重搖</button>
     </div>
     <button class="hold" id="holdBtn"><div class="fill" id="fill"></div><span id="holdTxt">按住起課</span></button>
     <button class="skip" id="skipBtn">直接看結果</button>
@@ -202,6 +240,7 @@ footer{text-align:center;font-size:12px;color:var(--mute);padding:12px 8px calc(
         <li>再從那格數子時，數到現在的時辰，停下的那格就是答案</li>
       </ol>
       <p>日期一律用農曆。晚上十一點以後已經是子時，算隔天。</p>
+      <p>報數、字數、搖數也是同一套掐法，只是把月、日、時換成另外三個數字：第一個數從大安數起，第二個從停下的那格接著數，第三個再接著數。</p>
     </details>
   </div>
 </main>
@@ -310,6 +349,46 @@ function showTime(){const w=when();$('timeTxt').textContent=w?`${w.leap?'閏':''
 const init=lunarNow(); if(init){selM.value=init.m;selD.value=init.d;selH.value=init.h;} else manual=true;
 showTime(); setInterval(()=>{if(!manual)showTime()},30000);
 [selM,selD,selH].forEach(s=>s.onchange=showTime);
+// ---------- 起課方式 ----------
+let way='time';
+const CN=n=>{const d='零一二三四五六七八九';if(n<10)return d[n];if(n<20)return '十'+(n%10?d[n%10]:'');return d[Math.floor(n/10)]+'十'+(n%10?d[n%10]:'');};
+const qLen=()=>$('q').value.replace(/[\s\p{P}\p{S}]/gu,'').length;
+function showChars(){const n=qLen(),w=lunarNow()||when();
+  $('charsTxt').innerHTML=n?`你的問題有 <b>${n}</b> 個字，配上${DAY(w.d)}和${ZHI[w.h]}時`:`<span class="warn">先在上面寫下你想問的事</span>`;}
+$('q').addEventListener('input',()=>{if(way==='chars')showChars();});
+let reel=[0,0,0],stopped=[false,false,false],spinT=null;
+function spin(){clearInterval(spinT);stopped=[false,false,false];[0,1,2].forEach(i=>$('r'+i).classList.remove('stop'));
+  spinT=setInterval(()=>{[0,1,2].forEach(i=>{if(!stopped[i]){reel[i]=1+Math.floor(Math.random()*60);$('r'+i).firstChild.nodeValue=reel[i];}});},70);}
+[0,1,2].forEach(i=>$('r'+i).onclick=()=>{if(running||stopped[i]||way!=='spin')return;stopped[i]=true;$('r'+i).classList.add('stop');$('r'+i).querySelector('small').textContent='停了';knock(1);buzz(10);
+  if(stopped.every(Boolean))clearInterval(spinT);});
+$('respin').onclick=()=>{if(running)return;[0,1,2].forEach(i=>$('r'+i).querySelector('small').textContent='點我停');spin();};
+document.querySelectorAll('.way').forEach(b=>b.onclick=()=>{if(running)return;way=b.dataset.w;
+  document.querySelectorAll('.way').forEach(x=>x.classList.toggle('on',x===b));
+  ['time','number','chars','spin'].forEach(k=>$('wp-'+k).classList.toggle('show',k===way));
+  if(way==='chars')showChars();
+  if(way==='spin'&&!stopped.every(Boolean)&&!spinT)spin();
+  if(way!=='spin'){clearInterval(spinT);spinT=null;}
+  const names=way==='time'?['月','日','時']:way==='chars'?['字','日','時']:['一','二','三'];
+  names.forEach((t,i)=>$('s'+i).firstChild.nodeValue=t);
+  knock(1);});
+const nv=id=>{const v=parseInt($(id).value,10);return v>=1&&v<=99?v:0;};
+// 回傳這次起課要用的三個數，或錯誤訊息
+function plan(){
+  if(way==='time'){const w=when();if(!w)return {err:'抓不到時間'};
+    return {code:manual?'manual':'now',nums:[w.m,w.d,w.h+1],fmts:[x=>MON[x-1]+'月',DAY,x=>ZHI[x-1]+'時'],
+      titles:['一　數月份','二　數日子','三　數時辰'],desc:`${w.leap?'閏':''}${MON[w.m-1]}月${DAY(w.d)}・${ZHI[w.h]}時`,
+      path:[`${MON[w.m-1]}月`,DAY(w.d),`${ZHI[w.h]}時`]};}
+  if(way==='number'){const a=nv('n1'),b=nv('n2'),c=nv('n3');if(!a||!b||!c)return {err:'先填三個 1 到 99 的數字'};
+    return {code:'number',nums:[a,b,c],fmts:[CN,CN,CN],titles:['一　數第一個數','二　數第二個數','三　數第三個數'],
+      desc:`報數 ${a}・${b}・${c}`,path:[`第一個數 ${a}`,`第二個數 ${b}`,`第三個數 ${c}`]};}
+  if(way==='chars'){const n=qLen();if(!n)return {err:'先寫下你想問的事'};const w=lunarNow()||when();
+    return {code:'chars',nums:[n,w.d,w.h+1],fmts:[x=>CN(x)+'字',DAY,x=>ZHI[x-1]+'時'],titles:['一　數字數','二　數日子','三　數時辰'],
+      desc:`${n} 個字・${DAY(w.d)}・${ZHI[w.h]}時`,path:[`${n} 個字`,DAY(w.d),`${ZHI[w.h]}時`]};}
+  if(!stopped.every(Boolean))return {err:'三個數字都點停再起課'};
+  const [a,b,c]=reel;
+  return {code:'spin',nums:[a,b,c],fmts:[CN,CN,CN],titles:['一　數第一籤','二　數第二籤','三　數第三籤'],
+    desc:`搖到 ${a}・${b}・${c}`,path:[`第一籤 ${a}`,`第二籤 ${b}`,`第三籤 ${c}`]};
+}
 $('editTime').onclick=()=>{manual=!manual;$('manual').classList.toggle('show',manual);$('editTime').textContent=manual?'用現在時間':'改時間';showTime();};
 
 // ---------- 選項 ----------
@@ -345,40 +424,39 @@ $('stage').addEventListener('pointerdown',()=>{
 document.addEventListener('keydown',e=>{if(e.code==='Space'&&waitTap&&document.activeElement.tagName!=='INPUT'){e.preventDefault();if(step()){waitTap=false;phases[pi].resolve();}}});
 
 async function start(){
-  const w=when(); if(!w)return;
+  const P=plan(); if(P.err)return;
   running=true; skip=false; land=[];
-  track('start',manual?'manual':'now',{topic:TOPIC[topic],mode});
+  track('start',P.code,{topic:TOPIC[topic],mode});
   $('slip').classList.remove('show'); $('stage').classList.add('busy');
   $('holdBtn').disabled=true; $('skipBtn').classList.add('show');
   [0,1,2].forEach(i=>seal(i,'',''));[0,1,2].forEach(i=>$('s'+i).querySelector('b').textContent='—');
-  phases=[{title:'一　數月份',n:w.m,fmt:x=>MON[x-1]+'月',speed:340,start:0},
-          {title:'二　數日子',n:w.d,fmt:DAY,speed:w.d>15?170:240},
-          {title:'三　數時辰',n:w.h+1,fmt:x=>ZHI[x-1]+'時',speed:340}];
+  const sp=n=>n<=12?340:n<=30?190:110;
+  phases=P.nums.map((n,i)=>({title:P.titles[i],n,fmt:P.fmts[i],speed:sp(n),start:0}));
   for(pi=0;pi<3;pi++){ if(pi>0)phases[pi].start=land[pi-1]; await runPhase(); if(skip&&k<phases[pi].n){while(!step());} }
-  finish(w);
+  finish(P);
 }
-function finish(w){
+function finish(P){
   const r=land[2],g=GONG[r];
   show(r); hit();
   $('phase').textContent='停在這裡'; $('cnt').firstChild.nodeValue=g.n; $('cntSub').textContent='';
   const q=$('q').value.trim();
-  $('rAsk').textContent=(q?`問：${q}`:`問：${TOPIC[topic]}`)+`　${MON[w.m-1]}月${DAY(w.d)}・${ZHI[w.h]}時`;
+  $('rAsk').textContent=(q?`問：${q}`:`問：${TOPIC[topic]}`)+`　${P.desc}`;
   $('rGong').textContent=g.n; $('rStamp').textContent=g.luck;
   $('rStamp').style.color=$('rStamp').style.borderColor=g.good>0?'#b8392a':g.good<0?'#2b2118':'#8a6a2c';
   $('rMeta').textContent=`臨${g.god}`;
   $('rMain').textContent=g.main;
   $('rTopics').innerHTML=g.t.map((s,i)=>`<div class="${i===topic?'hit':''}"><b>${TOPIC[i]}</b>${s}</div>`).join('');
-  $('rPath').textContent=`${MON[w.m-1]}月落在${GONG[land[0]].n}，${DAY(w.d)}落在${GONG[land[1]].n}，${ZHI[w.h]}時落在${g.n}`;
+  $('rPath').textContent=P.path.map((t,i)=>`${t}${/\d$/.test(t)?' ':''}落在${GONG[land[i]].n}`).join('，');
   // 同一件事今天問過
   let note='';
-  try{const key='qiazhi-log',today=`${w.m}-${w.d}`,log=JSON.parse(localStorage.getItem(key)||'{}');
+  try{const key='qiazhi-log',today=(t=>t?`${t.m}-${t.d}`:'')(lunarNow()),log=JSON.parse(localStorage.getItem(key)||'{}');
     const id=today+'|'+(q||TOPIC[topic]);
     if(log[id]!==undefined&&log[id]!==r){track('repeat',GONG[log[id]].n,{topic:TOPIC[topic],mode});}
     if(log[id]!==undefined&&log[id]!==r)note=`這件事今天問過了，上次是${GONG[log[id]].n}。照規矩，以第一次為準。`;
     else if(log[id]===undefined){log[id]=r;localStorage.setItem(key,JSON.stringify(log));}
   }catch(e){}
   $('rAgain').textContent=note;
-  last={r,w,topic,ask:q?`問：${q}`:`問：${TOPIC[topic]}`};
+  last={r,P,topic,ask:q?`問：${q}`:`問：${TOPIC[topic]}`};
   track('finish',g.n,{topic:TOPIC[topic],mode,asked:q?'yes':'no'});
   bell(); buzz([20,60,30]);
   $('slip').classList.add('show');
@@ -392,6 +470,7 @@ $('skipBtn').onclick=()=>{if(!skip)track('skip','',{mode});skip=true; if(waitTap
 const hold=$('holdBtn'),fill=$('fill'); let ht=null,hs=0,hraf;
 function holdStart(e){
   if(running||hold.disabled)return; e.preventDefault(); ctx();
+  const chk=plan(); if(chk.err){$('holdTxt').textContent=chk.err;buzz(30);setTimeout(()=>{if(!running)$('holdTxt').textContent='按住起課';},1800);return;}
   hs=performance.now(); $('holdTxt').textContent='默念中…'; buzz(10);
   const tick=now=>{const p=Math.min(1,(now-hs)/1200);fill.style.transform=`scaleX(${p})`;
     if(p>=1){holdEnd(true);return;} hraf=requestAnimationFrame(tick);};
@@ -451,7 +530,7 @@ async function makeCard(){
   gr=x.createLinearGradient(0,600,0,800);gr.addColorStop(0,'rgba(20,17,14,0)');gr.addColorStop(1,'#14110e');x.fillStyle=gr;x.fillRect(0,600,W,200);
   // 標頭
   x.textAlign='left';x.fillStyle='#c8a25a';x.font=F(900,44);x.fillText('掐指一算',64,72);
-  x.textAlign='right';x.fillStyle='#9c8d74';x.font=F(400,30);x.fillText(`${MON[last.w.m-1]}月${DAY(last.w.d)}・${ZHI[last.w.h]}時`,W-64,72);
+  x.textAlign='right';x.fillStyle='#9c8d74';x.font=F(400,30);x.fillText(last.P.desc,W-64,72);
   // 籤
   const top=780;x.fillStyle='#ecdfc6';x.fillRect(56,top,W-112,H-top-56);
   x.strokeStyle='#b8392a';x.lineWidth=4;x.strokeRect(72,top+16,W-144,H-top-88);
