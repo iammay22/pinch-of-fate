@@ -239,7 +239,7 @@ const $=id=>document.getElementById(id);
 const NS='http://www.w3.org/2000/svg';
 
 // ---------- 數據 ----------
-const ENDPOINT=''; // 填入 Apps Script 部署網址；留空就不送資料
+const ENDPOINT='https://script.google.com/macros/s/AKfycbySbT_k-k9PEoAScc2RBYpL-mZpX9hSz5-CDb2TJSAYwcE65n85jYv-K_bnahrUfUQ/exec'; // 填入 Apps Script 部署網址；留空就不送資料
 const sid=Math.random().toString(36).slice(2,10);
 let vid='';
 try{vid=localStorage.getItem('pof-visitor')||'';if(!vid){vid='v'+Math.random().toString(36).slice(2,10);localStorage.setItem('pof-visitor',vid);}}catch(e){vid='v-'+sid;}
