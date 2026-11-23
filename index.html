@@ -238,6 +238,22 @@ const DAY=n=>n<=10?'初'+'一二三四五六七八九十'[n-1]:n<20?'十'+'一�
 const $=id=>document.getElementById(id);
 const NS='http://www.w3.org/2000/svg';
 
+// ---------- 數據 ----------
+const ENDPOINT=''; // 填入 Apps Script 部署網址；留空就不送資料
+const sid=Math.random().toString(36).slice(2,10);
+let vid='';
+try{vid=localStorage.getItem('pof-visitor')||'';if(!vid){vid='v'+Math.random().toString(36).slice(2,10);localStorage.setItem('pof-visitor',vid);}}catch(e){vid='v-'+sid;}
+function source(){
+  const u=new URLSearchParams(location.search).get('utm_source'); if(u)return u;
+  try{const r=document.referrer?new URL(document.referrer).hostname:'';return r===location.hostname?'':r;}catch(e){return '';}
+}
+function track(event,value='',extra={}){
+  if(!ENDPOINT)return;
+  const body=JSON.stringify({event,value,visitor:vid,session:sid,device:innerWidth<700?'手機':'電腦',source:source(),...extra});
+  try{ if(navigator.sendBeacon&&navigator.sendBeacon(ENDPOINT,body))return; }catch(e){}
+  try{fetch(ENDPOINT,{method:'POST',mode:'no-cors',body});}catch(e){}
+}
+
 // ---------- 手 ----------
 const SITE_URL='https://iammay22.github.io/pinch-of-fate/';
 const POS=['食指根','食指尖','中指尖','無名指尖','無名指根','中指根'];
@@ -331,6 +347,7 @@ document.addEventListener('keydown',e=>{if(e.code==='Space'&&waitTap&&document.a
 async function start(){
   const w=when(); if(!w)return;
   running=true; skip=false; land=[];
+  track('start',manual?'manual':'now',{topic:TOPIC[topic],mode});
   $('slip').classList.remove('show'); $('stage').classList.add('busy');
   $('holdBtn').disabled=true; $('skipBtn').classList.add('show');
   [0,1,2].forEach(i=>seal(i,'',''));[0,1,2].forEach(i=>$('s'+i).querySelector('b').textContent='—');
@@ -356,18 +373,20 @@ function finish(w){
   let note='';
   try{const key='qiazhi-log',today=`${w.m}-${w.d}`,log=JSON.parse(localStorage.getItem(key)||'{}');
     const id=today+'|'+(q||TOPIC[topic]);
+    if(log[id]!==undefined&&log[id]!==r){track('repeat',GONG[log[id]].n,{topic:TOPIC[topic],mode});}
     if(log[id]!==undefined&&log[id]!==r)note=`這件事今天問過了，上次是${GONG[log[id]].n}。照規矩，以第一次為準。`;
     else if(log[id]===undefined){log[id]=r;localStorage.setItem(key,JSON.stringify(log));}
   }catch(e){}
   $('rAgain').textContent=note;
   last={r,w,topic,ask:q?`問：${q}`:`問：${TOPIC[topic]}`};
+  track('finish',g.n,{topic:TOPIC[topic],mode,asked:q?'yes':'no'});
   bell(); buzz([20,60,30]);
   $('slip').classList.add('show');
   setTimeout(()=>$('slip').scrollIntoView({behavior:'smooth',block:'start'}),250);
   running=false; $('stage').classList.remove('busy'); $('holdBtn').disabled=false; $('skipBtn').classList.remove('show');
   $('holdTxt').textContent='按住起課';
 }
-$('skipBtn').onclick=()=>{skip=true; if(waitTap){waitTap=false;$('tapnote').classList.remove('show');while(!step());phases[pi].resolve();}};
+$('skipBtn').onclick=()=>{if(!skip)track('skip','',{mode});skip=true; if(waitTap){waitTap=false;$('tapnote').classList.remove('show');while(!step());phases[pi].resolve();}};
 
 // 長按起課
 const hold=$('holdBtn'),fill=$('fill'); let ht=null,hs=0,hraf;
@@ -390,10 +409,10 @@ hold.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.repeat
 hold.addEventListener('keyup',e=>{if(e.key==='Enter'||e.key===' ')holdEnd(false);});
 hold.addEventListener('contextmenu',e=>e.preventDefault());
 
-$('newBtn').onclick=()=>{$('slip').classList.remove('show');$('q').value='';$('q').focus();show(-1);
+$('newBtn').onclick=()=>{track('again');$('slip').classList.remove('show');$('q').value='';$('q').focus();show(-1);
   $('phase').textContent='靜心';$('cnt').firstChild.nodeValue='—';$('cntSub').textContent='';[0,1,2].forEach(i=>{seal(i,'');$('s'+i).querySelector('b').textContent='—';});
   $('panel').scrollIntoView({behavior:'smooth'});};
-$('copyBtn').onclick=async()=>{
+$('copyBtn').onclick=async()=>{track('copy_result',GONG[land[2]].n);
   const txt=`${$('rAsk').textContent}\n掐到「${$('rGong').textContent}」${$('rStamp').textContent}\n${$('rMain').textContent}\n${TOPIC[topic]}：${GONG[land[2]].t[topic]}\n\n你也來算算看 ${LINK}`;
   try{await navigator.clipboard.writeText(txt);$('copyBtn').textContent='複製好了';}catch(e){$('copyBtn').textContent='這裡不能複製';}
   setTimeout(()=>$('copyBtn').textContent='複製結果',1500);
@@ -409,7 +428,7 @@ async function copyText(t,btn,okTxt,rest){
   }
   btn.textContent=ok?okTxt:'請手動複製'; setTimeout(()=>btn.textContent=rest,1500); return ok;
 }
-$('linkBtn').onclick=()=>copyText(LINK,$('linkBtn'),'複製好了','複製連結');
+$('linkBtn').onclick=()=>track('copy_link')||copyText(LINK,$('linkBtn'),'複製好了','複製連結');
 $('siteLink').onclick=e=>e.target.select();
 
 // ---------- 分享卡 ----------
@@ -454,7 +473,7 @@ async function makeCard(){
   x.textAlign='right';x.fillText('作者：may22',W-64,H-26);
   return new Promise(res=>c.toBlob(b=>res(b),'image/png'));
 }
-$('cardBtn').onclick=async()=>{
+$('cardBtn').onclick=async()=>{track('card',GONG[last.r].n,{topic:TOPIC[last.topic]});
   $('cardBtn').textContent='製作中…';
   cardBlob=await makeCard();
   $('cardImg').src=URL.createObjectURL(cardBlob);
@@ -462,7 +481,7 @@ $('cardBtn').onclick=async()=>{
 };
 $('closeCard').onclick=()=>$('modal').classList.remove('show');
 $('modal').onclick=e=>{if(e.target.id==='modal')$('modal').classList.remove('show');};
-$('saveCard').onclick=()=>{
+$('saveCard').onclick=()=>{track('save_card',GONG[last.r].n);
   try{const a=document.createElement('a');a.href=$('cardImg').src;a.download=`掐指一算-${GONG[last.r].n}.png`;document.body.appendChild(a);a.click();a.remove();}catch(e){}
   $('cardTip').textContent='沒有開始下載的話，長按圖片就能存起來';
 };
@@ -470,11 +489,13 @@ $('shareCard').onclick=async()=>{
   const text=`我掐到「${GONG[last.r].n}」，你也來算算看`;
   try{
     const file=new File([cardBlob],'掐指一算.png',{type:'image/png'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:text+' '+LINK});return;}
-    if(navigator.share){await navigator.share({title:'掐指一算',text,url:LINK});return;}
+    if(navigator.canShare&&navigator.canShare({files:[file]})){track('share','native');await navigator.share({files:[file],text:text+' '+LINK});return;}
+    if(navigator.share){track('share','native');await navigator.share({title:'掐指一算',text,url:LINK});return;}
   }catch(e){if(e&&e.name==='AbortError')return;}
+  track('share','copy');
   await copyText(text+' '+LINK,$('shareCard'),'已複製文字和連結','分享');
 };
+track('visit');
 }
 </script>
 </body>
