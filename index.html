@@ -460,6 +460,7 @@ function finish(P){
   track('finish',g.n,{topic:TOPIC[topic],mode,asked:q?'yes':'no'});
   bell(); buzz([20,60,30]);
   $('slip').classList.add('show');
+  $('panel').hidden=true;
   setTimeout(()=>$('slip').scrollIntoView({behavior:'smooth',block:'start'}),250);
   running=false; $('stage').classList.remove('busy'); $('holdBtn').disabled=false; $('skipBtn').classList.remove('show');
   $('holdTxt').textContent='按住起課';
@@ -488,7 +489,7 @@ hold.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.repeat
 hold.addEventListener('keyup',e=>{if(e.key==='Enter'||e.key===' ')holdEnd(false);});
 hold.addEventListener('contextmenu',e=>e.preventDefault());
 
-$('newBtn').onclick=()=>{track('again');$('slip').classList.remove('show');$('q').value='';$('q').focus();show(-1);
+$('newBtn').onclick=()=>{track('again');$('panel').hidden=false;$('slip').classList.remove('show');$('q').value='';$('q').focus();show(-1);
   $('phase').textContent='靜心';$('cnt').firstChild.nodeValue='—';$('cntSub').textContent='';[0,1,2].forEach(i=>{seal(i,'');$('s'+i).querySelector('b').textContent='—';});
   $('panel').scrollIntoView({behavior:'smooth'});};
 $('copyBtn').onclick=async()=>{track('copy_result',GONG[land[2]].n);
